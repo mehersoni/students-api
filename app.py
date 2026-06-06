@@ -12,8 +12,11 @@ app.add_middleware(
 )
 
 students = []
+from pathlib import Path
 
-with open("q-fastapi.csv", newline="", encoding="utf-8") as f:
+csv_file = Path(__file__).parent / "q-fastapi.csv"
+
+with open(csv_file, newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         students.append({
