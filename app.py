@@ -13,7 +13,7 @@ app.add_middleware(
 
 students = []
 
-with open(r"C:\Users\Meher\students-api\q-fastapi.csv", newline="", encoding="utf-8") as f:
+with open("q-fastapi.csv", newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         students.append({
