@@ -1,33 +1,42 @@
-from fastapi import FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
-import csv
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"]
-)
+class SentimentRequest(BaseModel):
+    sentences: List[str]
 
-students = []
-from pathlib import Path
+POSITIVE = {
+    "love", "great", "excellent", "amazing", "wonderful",
+    "good", "happy", "fantastic", "awesome", "best", "like"
+}
 
-csv_file = Path(__file__).parent / "q-fastapi.csv"
+NEGATIVE = {
+    "hate", "terrible", "awful", "bad", "worst",
+    "sad", "angry", "horrible", "poor", "disappointed"
+}
 
-with open(csv_file, newline="", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        students.append({
-            "studentId": int(row["studentId"]),
-            "class": row["class"]
+@app.post("/sentiment")
+def sentiment(req: SentimentRequest):
+    results = []
+
+    for sentence in req.sentences:
+        text = sentence.lower()
+
+        pos = sum(word in text for word in POSITIVE)
+        neg = sum(word in text for word in NEGATIVE)
+
+        if pos > neg:
+            label = "happy"
+        elif neg > pos:
+            label = "sad"
+        else:
+            label = "neutral"
+
+        results.append({
+            "sentence": sentence,
+            "sentiment": label
         })
 
-@app.get("/api")
-def get_students(class_: list[str] | None = Query(default=None, alias="class")):
-    if not class_:
-        return {"students": students}
-
-    filtered = [s for s in students if s["class"] in class_]
-    return {"students": filtered}
+    return {"results": results}
