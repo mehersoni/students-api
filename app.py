@@ -1,14 +1,13 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -16,36 +15,29 @@ app.add_middleware(
 class SentimentRequest(BaseModel):
     sentences: List[str]
 
-@app.post("/sentiment")
+def classify(text: str):
+    text = text.lower()
+
+    positive = ["love","great","excellent","amazing","awesome","good","happy","fantastic"]
+    negative = ["hate","terrible","awful","bad","worst","sad","horrible","angry"]
+
+    pos = sum(w in text for w in positive)
+    neg = sum(w in text for w in negative)
+
+    if pos > neg:
+        return "happy"
+    elif neg > pos:
+        return "sad"
+    return "neutral"
+
+@app.post("/")
 def sentiment(req: SentimentRequest):
-    positive = {
-        "love","great","excellent","amazing","awesome",
-        "good","happy","fantastic","wonderful","best"
+    return {
+        "results": [
+            {
+                "sentence": s,
+                "sentiment": classify(s)
+            }
+            for s in req.sentences
+        ]
     }
-
-    negative = {
-        "hate","terrible","awful","bad","worst",
-        "sad","horrible","angry","disappointed"
-    }
-
-    results = []
-
-    for sentence in req.sentences:
-        text = sentence.lower()
-
-        pos = sum(word in text for word in positive)
-        neg = sum(word in text for word in negative)
-
-        if pos > neg:
-            label = "happy"
-        elif neg > pos:
-            label = "sad"
-        else:
-            label = "neutral"
-
-        results.append({
-            "sentence": sentence,
-            "sentiment": label
-        })
-
-    return {"results": results}
