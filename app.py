@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+from textblob import TextBlob
+
 
 app = FastAPI()
 
@@ -15,18 +17,14 @@ app.add_middleware(
 class SentimentRequest(BaseModel):
     sentences: List[str]
 
-def classify(text: str):
-    text = text.lower()
 
-    positive = ["love","great","excellent","amazing","awesome","good","happy","fantastic"]
-    negative = ["hate","terrible","awful","bad","worst","sad","horrible","angry"]
 
-    pos = sum(w in text for w in positive)
-    neg = sum(w in text for w in negative)
+def classify(text):
+    polarity = TextBlob(text).sentiment.polarity
 
-    if pos > neg:
+    if polarity > 0.1:
         return "happy"
-    elif neg > pos:
+    elif polarity < -0.1:
         return "sad"
     return "neutral"
 
